@@ -1,4 +1,4 @@
-# Dockerfile para Fly.io
+# Dockerfile para Render (ou local)
 FROM node:20-slim
 
 WORKDIR /app
@@ -7,6 +7,6 @@ COPY package*.json ./
 RUN npm install --production
 
 COPY . .
-EXPOSE 8080
+EXPOSE 5000
 
 CMD ["node", "server.js"]
