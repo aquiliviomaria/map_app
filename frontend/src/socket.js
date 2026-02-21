@@ -1,6 +1,6 @@
 import { io } from "socket.io-client";
 
-// Em desenvolvimento: backend local. Em produção: substituir pelo URL do Fly.io
+// Em desenvolvimento: backend local. Em produção: URL do Render
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
 
 const socket = io(BACKEND_URL, {

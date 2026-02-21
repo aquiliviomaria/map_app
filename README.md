@@ -17,7 +17,6 @@ map_app/
 │   ├── server.js
 │   ├── package.json
 │   ├── Dockerfile
-│   ├── fly.toml
 │   └── .dockerignore
 ├── frontend/             # React + Leaflet
 │   ├── src/
@@ -28,6 +27,7 @@ map_app/
 │   ├── .env.example
 │   ├── vercel.json
 │   └── package.json
+├── render.yaml           # Config deploy Render (backend)
 └── README.md
 ```
 
@@ -63,68 +63,63 @@ O frontend corre em `http://localhost:3000`.
 
 ## 🌍 Deploy
 
-### Backend (Fly.io)
+### Backend (Render)
 
-1. **Instala o Fly CLI**
+1. **Cria conta** em [render.com](https://render.com) (free tier, sem cartão obrigatório)
 
-   ```bash
-   # Linux/macOS
-   curl -L https://fly.io/install.sh | sh
-   ```
+2. **Liga o repositório**
 
-2. **Autenticação**
+   - New → Web Service
+   - Conecta o teu repositório Git (GitHub/GitLab)
+   - Seleciona o repositório do projeto
 
-   ```bash
-   fly auth login
-   ```
+3. **Configura o serviço**
 
-3. **Deploy**
+   - **Name:** `map-app-backend`
+   - **Region:** Frankfurt ou mais próximo
+   - **Runtime:** **Docker**
+   - **Dockerfile Path:** `./backend/Dockerfile`
+   - **Docker Context:** `./backend`
+   - **Plan:** Free
 
-   ```bash
-   cd backend
-   fly launch
-   ```
+4. **Deploy**
 
-   - Nome da app: `map-app-backend`
-   - Região:`ams` 
+   - Clica em **Create Web Service**
+   - O Render faz build a partir do Dockerfile e publica
+   - Guarda o URL: `https://map-app-backend.onrender.com` (o nome pode variar)
 
-4. **Publicar**
+5. **Nota Free Tier:** O serviço pode ficar inativo após ~15 min sem tráfego. O primeiro request após isso pode demorar 30–60 s (cold start).
 
-   ```bash
-   fly deploy
-   ```
+### Opção: Deploy com Blueprint (render.yaml)
 
-5. **Guarda o URL** (ex: `https://map-app-backend.fly.dev`)
+Se o repositório tiver o ficheiro `render.yaml` na raiz:
+
+1. No Render: **New** → **Blueprint**
+2. Seleciona o repositório
+3. O Render lê o `render.yaml` e cria o serviço automaticamente
 
 ### Frontend (Vercel)
 
-1. **Instala o Vercel CLI** (opcional)
-
-   ```bash
-   npm i -g vercel
-   ```
-
-2. **Configura a variável de ambiente**
+1. **Configura a variável de ambiente**
 
    - No [dashboard da Vercel](https://vercel.com/dashboard): Settings → Environment Variables
-   - Adiciona: `VITE_BACKEND_URL` = `https://SEU-APP-BACKEND.fly.dev`
-   - Substitui pelo URL real do backend no Fly.io
+   - Adiciona: `VITE_BACKEND_URL` = `https://map-app-backend.onrender.com`
+   - Substitui pelo URL real do backend no Render
 
-3. **Deploy**
+2. **Deploy**
 
-   - **Opção A (Git):** Faz push do repositório e liga o projeto na Vercel. O build usa `npm run build` automaticamente.
+   - **Opção A (Git):** Push do repositório e liga o projeto na Vercel
    - **Opção B (CLI):**
      ```bash
      cd frontend
      vercel
      ```
-     Configura a variável `VITE_BACKEND_URL` quando solicitado ou no dashboard.
 
-4. O frontend ficará disponível em `https://teu-projeto.vercel.app`
+3. O frontend ficará disponível em `https://teu-projeto.vercel.app`
 
 ### Checklist pós-deploy
 
-- [ ] Backend a responder em `https://SEU-APP.fly.dev`
+- [ ] Backend a responder em `https://SEU-APP.onrender.com`
 - [ ] Variável `VITE_BACKEND_URL` definida na Vercel com o URL do backend
 - [ ] Frontend em produção a conectar ao backend (indicador "🟢 Conectado" no header)
 
@@ -132,16 +127,23 @@ O frontend corre em `http://localhost:3000`.
 
 ## 📌 Funcionalidades
 
-- ✅ Ecrande boas-vindas com nome de utilizador
+- ✅ Ecrã de boas-vindas com nome de utilizador
 - ✅ Mapa em tempo real (Leaflet)
 - ✅ Coordenadas próprias (Geolocation API)
 - ✅ Coordenadas de todos os utilizadores conectados
 - ✅ Actualização em tempo real (Socket.io)
-- ✅ Indicador de ligação (Online)
+- ✅ Indicador de ligação (Conectado/Desligado)
 - ✅ Contador de utilizadores conectados
 - ✅ Painel lateral com coordenadas (lat, lng)
 - ✅ Marcadores com nome de utilizador
 - ✅ Loading enquanto obtém localização
 - ✅ Tratamento de erro se o utilizador recusar localização
 
+## 🧠 Pontos técnicos
 
+| Pergunta                         | Resposta                                                         |
+| -------------------------------- | ---------------------------------------------------------------- |
+| **Porquê WebSockets?**           | Comunicação bidireccional em tempo real, sem polling.            |
+| **Onde são guardados os dados?** | Em memória (objeto `users`). Sem BD conforme pedido.             |
+| **O que acontece ao sair?**      | Evento `disconnect` remove o utilizador do objeto.               |
+| **Escalabilidade?**              | Single-instance. Para escalar: Redis adapter, load balancer, BD. |

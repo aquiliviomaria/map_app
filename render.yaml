@@ -1,0 +1,9 @@
+# Render Blueprint - Deploy do backend
+# Ver: https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: map-app-backend
+    runtime: docker
+    rootDir: backend
+    plan: free
